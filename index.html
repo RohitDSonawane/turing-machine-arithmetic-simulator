@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turing Machine Arithmetic Simulator — From Tape to ALU</title>
+  <meta name="description" content="A live, interactive Turing Machine simulator demonstrating binary increment, addition, and multiplication, connecting abstract automata steps to CPU ALU logic.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;700;800&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="page-background" aria-hidden="true"></div>
+
+  <main class="app-container" id="app">
+    <!-- Header -->
+    <header class="header-section">
+      <h1 class="main-title" id="main-title">TURING MACHINE</h1>
+      <p class="machine-subtitle" id="machine-subtitle">Binary Increment · 1 tape</p>
+    </header>
+
+    <!-- Machine Tabs -->
+    <nav class="tabs-nav" aria-label="Machine Selection">
+      <div class="tabs-group" id="machine-tabs" role="tablist">
+        <button type="button" class="tab-btn active" role="tab" aria-selected="true" id="tab-increment" data-machine="increment">INCREMENT</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" id="tab-addition" data-machine="addition">ADDITION</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" id="tab-multiplication" data-machine="multiplication">MULTIPLICATION</button>
+      </div>
+    </nav>
+
+    <!-- Machine Panel (D1, D2) -->
+    <section class="machine-panel" aria-label="Machine State and Rules">
+      <div class="panel-rivet rivet-tl" aria-hidden="true"></div>
+      <div class="panel-rivet rivet-tr" aria-hidden="true"></div>
+      <div class="panel-rivet rivet-bl" aria-hidden="true"></div>
+      <div class="panel-rivet rivet-br" aria-hidden="true"></div>
+      
+      <!-- Decorative wires -->
+      <svg class="panel-wires" viewBox="0 0 100 40" aria-hidden="true">
+        <path d="M 5,38 C 15,10 40,5 50,5" stroke="#B63B3B" stroke-width="2.5" fill="none" />
+        <path d="M 12,38 C 22,18 45,12 58,5" stroke="#922525" stroke-width="2" fill="none" />
+      </svg>
+
+      <!-- Panel Content Split into Left and Right Zones -->
+      <div class="panel-body">
+        <!-- Left Zone: State & Knobs/Lamps -->
+        <div class="panel-zone-left">
+          <div class="state-header-row">
+            <span class="yellow-label">STATE:</span>
+            <div class="decorative-toggle" aria-hidden="true">
+              <span class="toggle-switch"></span>
+            </div>
+          </div>
+
+          <div class="state-plate" id="state-plate">
+            <div class="state-display" id="state-display" aria-label="Current State">SCAN RIGHT</div>
+            <div class="state-id-tag" id="state-id">q0</div>
+          </div>
+
+          <div class="rules-header-row">
+            <span class="yellow-label">RULES:</span>
+            <div class="lamps-group" aria-label="Status Lamps">
+              <div class="lamp-unit">
+                <div class="lamp" id="lamp-step" title="Step Pulse"></div>
+                <span class="lamp-sublabel">STEP</span>
+              </div>
+              <div class="lamp-unit">
+                <div class="lamp" id="lamp-left" title="Head Moved Left"></div>
+                <span class="lamp-sublabel">LEFT</span>
+              </div>
+              <div class="lamp-unit">
+                <div class="lamp" id="lamp-right" title="Head Moved Right"></div>
+                <span class="lamp-sublabel">RIGHT</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Zone: Rules Table or Macro Card -->
+        <div class="panel-zone-right">
+          <!-- Phase stepper (Multiplication only) -->
+          <div class="phase-stepper-container" id="phase-stepper-container" style="display: none;">
+            <div class="phase-stepper" id="phase-stepper" aria-label="Multiplication Phase Stepper">
+              <span class="phase-step" data-phase="READ">READ N BIT</span>
+              <span class="phase-arrow">→</span>
+              <span class="phase-step" data-phase="ADD">ADD</span>
+              <span class="phase-arrow">→</span>
+              <span class="phase-step" data-phase="COPY">COPY</span>
+              <span class="phase-arrow">→</span>
+              <span class="phase-step" data-phase="SHIFT">SHIFT</span>
+              <span class="phase-arrow">→</span>
+              <span class="phase-step" data-phase="NEXT">NEXT</span>
+            </div>
+          </div>
+
+          <!-- Macro Card (when multiplier in macro phase) -->
+          <div class="macro-card" id="macro-card" style="display: none;">
+            <div class="macro-badge-row">
+              <span class="macro-badge">MACRO</span>
+              <span class="macro-title" id="macro-title">READ N BIT</span>
+            </div>
+            <p class="macro-desc" id="macro-desc">Look at the multiplier bit under the head.</p>
+          </div>
+
+          <!-- Rules Table View -->
+          <div class="rules-table-wrapper" id="rules-table-wrapper">
+            <div class="rules-table-header-bar">
+              <div class="rules-th th-state">STATE</div>
+              <div class="rules-th th-read">READ</div>
+              <div class="rules-th th-effect">
+                <span>EFFECT</span>
+                <span class="subroutine-chip" id="subroutine-chip" style="display: none;">SUBROUTINE: ADD</span>
+              </div>
+            </div>
+            <div class="rules-scroll-area" id="rules-scroll-area">
+              <table class="rules-table" id="rules-table">
+                <tbody id="rules-tbody">
+                  <!-- Generated rule rows -->
+                </tbody>
+              </table>
+            </div>
+            <div class="rules-table-footer">
+              <button type="button" class="btn-text-toggle" id="btn-toggle-rules">Show all rules</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tape Section (D3) -->
+    <section class="tape-section" id="tape-section" aria-label="Tapes">
+      <div class="tapes-container" id="tapes-container">
+        <!-- Tape strips rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Explain Bar (D4) -->
+    <section class="explain-section" aria-label="Step Explanation">
+      <div class="explain-card" id="explain-card">
+        <div class="explain-icon" aria-hidden="true">💡</div>
+        <div class="explain-content">
+          <div class="explain-next" id="explain-next">Ready to step.</div>
+          <div class="explain-last" id="explain-last" style="display: none;"></div>
+        </div>
+      </div>
+      <!-- ARIA Live region -->
+      <div class="sr-only" aria-live="polite" id="aria-live-status"></div>
+    </section>
+
+    <!-- Control Bar (S1-S6, D11) -->
+    <section class="controls-section" aria-label="Simulation Controls">
+      <div class="controls-bar" id="controls-bar">
+        <div class="controls-buttons-group">
+          <button type="button" class="btn-ctrl btn-arcade" id="btn-reset" title="Reset to loaded input (Key: R)">
+            <span class="btn-icon">⟲</span> Reset
+          </button>
+          <button type="button" class="btn-ctrl btn-arcade" id="btn-back" title="Step back one transition (Key: Left Arrow)">
+            <span class="btn-icon">◀</span> Back
+          </button>
+          <button type="button" class="btn-ctrl btn-arcade btn-primary-step" id="btn-step" title="Step forward one transition (Key: Right Arrow)">
+            <span class="btn-icon">▶</span> Step
+          </button>
+          <button type="button" class="btn-ctrl btn-arcade btn-run" id="btn-run" title="Run / Pause simulation (Key: Space)">
+            <span class="btn-icon" id="run-icon">⏵</span> <span id="run-text">Run</span>
+          </button>
+          <button type="button" class="btn-ctrl btn-arcade" id="btn-to-end" title="Jump to end instantly">
+            <span class="btn-icon">⏭</span> To end
+          </button>
+        </div>
+
+        <div class="controls-speed-group">
+          <label for="speed-slider" class="speed-label">
+            <span>Slow</span>
+            <input type="range" id="speed-slider" min="80" max="1200" step="10" value="500" aria-label="Simulation speed">
+            <span>Fast</span>
+          </label>
+        </div>
+
+        <div class="controls-counter-group">
+          <div class="step-counter" id="step-counter" aria-label="Step counter">STEP 0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-column Row: Input Panel & Results / Hardware Card -->
+    <div class="two-column-row">
+      <!-- Left Column: Input Panel (D5) -->
+      <div class="col-left">
+        <section class="card input-card" aria-label="Input Configuration">
+          <h2 class="card-title">LOAD INPUT</h2>
+          <form id="input-form" onsubmit="return false;">
+            <div class="input-fields-container" id="input-fields-container">
+              <!-- Dynamically populated fields depending on machine -->
+            </div>
+            
+            <div class="decimal-preview-row" id="decimal-preview-row">
+              <span class="decimal-preview-text" id="decimal-preview-text">= 11</span>
+            </div>
+
+            <div class="input-error-msg" id="input-error-msg" role="alert" style="display: none;"></div>
+
+            <div class="presets-section">
+              <span class="presets-label">Presets:</span>
+              <div class="presets-chips" id="presets-chips">
+                <!-- Dynamically generated chips -->
+              </div>
+            </div>
+
+            <div class="input-actions-row">
+              <button type="button" class="btn-arcade btn-load" id="btn-load">Load onto tape</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <!-- Right Column: Result Banner (D6) & Hardware Link Card (D8) -->
+      <div class="col-right">
+        <!-- Result Banner (D6) -->
+        <section class="result-banner" id="result-banner" role="status" style="display: none;">
+          <div class="result-badge-row">
+            <span class="result-status-tag" id="result-status-tag">HALTED ✔</span>
+            <span class="result-output-main" id="result-output-main">Output: 1100</span>
+            <span class="result-output-dec" id="result-output-dec">(decimal 12)</span>
+          </div>
+          <div class="result-details-row">
+            <span class="result-expected" id="result-expected">Expected: 11 + 1 = 12</span>
+            <span class="result-steps" id="result-steps">Steps: 8</span>
+          </div>
+        </section>
+
+        <!-- Hardware Link Card (D8) -->
+        <section class="card hardware-card" id="hardware-card" aria-label="ALU Hardware Link">
+          <h2 class="card-title">HARDWARE LINK: ALU CONNECTION</h2>
+          <div class="hardware-content" id="hardware-content">
+            <!-- Hardware truth table / explanation rendered dynamically -->
+          </div>
+          <p class="hardware-caveat">A real CPU does not use a tape; this shows the same idea in electronics.</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Trace Log (D7) -->
+    <section class="trace-section">
+      <details class="trace-details" id="trace-details">
+        <summary class="trace-summary">
+          <span>Execution Trace Log</span>
+          <span class="trace-row-count" id="trace-row-count">(0 steps)</span>
+        </summary>
+        <div class="trace-table-container">
+          <table class="trace-table" id="trace-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>State</th>
+                <th>Read</th>
+                <th>Write</th>
+                <th>Move</th>
+                <th>Next</th>
+              </tr>
+            </thead>
+            <tbody id="trace-tbody">
+              <!-- Dynamically populated step rows -->
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer-section">
+      <p class="footer-primary">Built for Theory of Computation · FA2 · From Tape to ALU</p>
+      <p class="footer-macro-note" id="footer-macro-note" style="display: none;">
+        COPY, SHIFT and NEXT BIT are macro steps that stand for small sub-machines. ADD runs as real transitions.
+      </p>
+    </footer>
+  </main>
+
+  <!-- Scripts in required order -->
+  <script src="js/engine.js"></script>
+  <script src="js/machines.js"></script>
+  <script src="js/composite.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

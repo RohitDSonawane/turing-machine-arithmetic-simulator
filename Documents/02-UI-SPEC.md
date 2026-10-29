@@ -168,7 +168,7 @@ A light card with a title `LOAD INPUT`.
 Hidden until the machine halts (or gets stuck). On halt, show:
 
 ```
-HALTED ✔  Output: 10001      (decimal 17)
+HALTED   Output: 10001      (decimal 17)
 Expected: 11 + 6 = 17        Steps: 5
 ```
 

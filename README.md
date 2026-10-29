@@ -1,63 +1,56 @@
-# 🕹️ Turing Machine Arithmetic Simulator: From Tape to ALU
+# Turing Machine Arithmetic Simulator
 
-An interactive, retro-arcade styled educational simulator that animates Turing Machines executing binary arithmetic. Designed to bridge the gap between theoretical automata and real-world computer architecture, demonstrating how the fundamental operations of a CPU Arithmetic Logic Unit (ALU) emerge directly from Turing Machine transitions.
+[![Tests](https://github.com/RohitDSonawane/turing-machine-arithmetic-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/RohitDSonawane/turing-machine-arithmetic-simulator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
+An interactive simulator that animates Turing machines doing binary arithmetic. It shows how the operations inside a CPU's arithmetic logic unit (ALU) come out of plain Turing machine transitions: increment is a chain of half-adders, addition is a full adder with the carry stored in the machine's state, and multiplication is shift-and-add.
 
-## Highlights
+Live demo: https://rohitdsonawane.github.io/turing-machine-arithmetic-simulator/
 
-- **Pure Web Technologies**: Vanilla HTML5, CSS3, and JavaScript (ES2019). No frameworks, no bundlers, no build steps, and zero runtime dependencies.
-- **Works 100% Offline**: Open `index.html` directly in any browser via `file://`.
-- **Interactive Retro Arcade Aesthetic**: Dark slate chassis, corner rivets, illuminated status lamps (`STEP`, `LEFT`, `RIGHT`), dynamic read/write tape head assembly, rotating mechanical gears, and custom slimline arcade scrollbars.
-- **ALU Hardware Connection**: Live 1-bit full adder truth table card highlighting the exact electronic circuit equivalent for every computational step.
-- **Plain-English Explanations**: Real-time explain bar detailing what symbol is read, what is written, which way the heads move, and why the next state is selected.
-- **Subroutine Composition**: Demonstrates higher-order automata by executing the 3-tape adder as a callable subroutine inside the shift-and-add multiplier.
+![Binary addition: 1011 + 0110 = 10001](docs/screenshots/addition.png)
 
----
+## Features
 
-## Machines Implemented
+- Plain HTML, CSS and JavaScript (ES2019). There is no framework, no bundler, no build step and no runtime dependency.
+- It runs from `index.html` opened straight from disk. Without a connection the web fonts fall back to system fonts, but everything else works.
+- The interface looks like an arcade cabinet: a dark chassis with rivets, lamps for `STEP`, `LEFT` and `RIGHT`, a read/write head that slides along each tape, and rotating gears.
+- A live 1-bit full adder truth table highlights the row that matches the current step, so you can see the circuit equivalent of each transition.
+- An explain bar says in plain English what symbol was read, what was written, which way the heads moved and why the next state was chosen.
+- Multiplication calls the 3-tape adder as a subroutine, which shows one automaton built from another.
 
-| Machine | Tapes | Algorithm & Concept | Hardware Link |
+## Machines
+
+| Machine | Tapes | Algorithm | Hardware link |
 |---|---|---|---|
-| **Binary Increment** | 1 Tape (`NUMBER`) | Scans right to LSB, walks left flipping trailing `1`s to `0` until a `0` or blank is encountered. | Chain of half-adders (program counter / counter circuits). |
-| **Binary Addition** | 3 Tapes (`A`, `B`, `RESULT`) | Aligns operands at column 0. Evaluates sum column-by-column moving left, storing the carry directly in the automaton state (`c0` / `c1`). | 1-bit full adder truth table and ALU carry wire. |
-| **Binary Multiplication** | 4 Tapes (`M`, `N`, `A`, `T`) | Shift-and-add algorithm using phases (`READ` → `ADD` → `COPY` → `SHIFT` → `NEXT`). Calls the 3-tape adder as an internal subroutine. | Multiplier accumulator and barrel shifter logic. |
+| Binary increment | 1 (`NUMBER`) | Scan right to the least significant bit, then walk left turning trailing `1`s into `0` until a `0` or a blank turns up. | Chain of half-adders, as in counters and program counters. |
+| Binary addition | 3 (`A`, `B`, `RESULT`) | Align both operands at column 0 and add column by column moving left. The carry lives in the machine's state (`c0` or `c1`). | 1-bit full adder and the ALU carry wire. |
+| Binary multiplication | 4 (`M`, `N`, `A`, `T`) | Shift-and-add in phases: `READ`, `ADD`, `COPY`, `SHIFT`, `NEXT`. The `ADD` phase runs the 3-tape adder as a subroutine. | Multiplier accumulator and barrel shifter. |
 
----
+![Binary multiplication: 101 x 11 = 1111](docs/screenshots/multiplication.png)
 
-## How to Run
+## Running it
 
-### 1. Direct Browser Access (Recommended)
-Double-click `index.html` or open it directly in Google Chrome, Mozilla Firefox, Microsoft Edge, or Safari:
+Open `index.html` in any current browser:
+
 ```bash
-# Terminal launch commands
 start index.html       # Windows
 open index.html        # macOS
 xdg-open index.html    # Linux
 ```
 
-### 2. Local HTTP Server (Optional)
+Or serve the folder locally:
+
 ```bash
 python -m http.server 8000
-# Then open: http://localhost:8000
+# then open http://localhost:8000
 ```
 
-### 3. Deploy to GitHub Pages (One-Click)
-1. Go to repository **Settings** → **Pages**.
-2. Under **Branch**, select `main` and root folder `/ (root)`.
-3. Click **Save**. The simulator will be live immediately with no build pipeline required.
+To publish it with GitHub Pages, go to Settings, then Pages, choose the `main` branch and the `/ (root)` folder, and save. No build is needed.
 
----
+## Tests
 
-## Running the Test Suite
+`node tests/run.js` runs 14 test groups with no external packages. They cover the exact vectors from the spec, every input from 0 to 1023 for increment, and randomized pairs for addition and multiplication. GitHub Actions runs them on every push.
 
-The simulator includes a deterministic test suite containing 14 test groups and over 1,500 assertions (covering exact slide vectors, exhaustive checks up to 1023, and randomized multi-digit property tests):
-
-```bash
-node tests/run.js
-```
-
-Sample output:
 ```text
 Running Turing Machine simulator test suite...
 
@@ -79,48 +72,41 @@ Running Turing Machine simulator test suite...
 Tests completed: 14 passed, 0 failed.
 ```
 
----
-
-## Keyboard Controls
+## Keyboard controls
 
 | Key | Action |
 |---|---|
-| `Space` | Run / Pause simulation |
-| `→` (Right Arrow) | Step forward one transition |
-| `←` (Left Arrow) | Step backward one transition (history undo) |
-| `R` or `r` | Reset to initial tape input |
+| `Space` | Run or pause |
+| `→` | Step forward one transition |
+| `←` | Step back one transition |
+| `R` | Reset to the initial tape |
 
-*(Keyboard shortcuts are automatically suppressed while focus is inside an input field).*
+Shortcuts are ignored while an input field has focus.
 
----
-
-## Repository Structure
+## Project layout
 
 ```text
 .
-├── index.html          # Semantic HTML5 chassis and component structure
+├── index.html          page structure
 ├── css/
-│   └── styles.css      # Retro arcade design system, animations, responsive layout
+│   └── styles.css      styles, animations and responsive layout
 ├── js/
-│   ├── engine.js       # Generic deterministic multi-tape Turing machine engine
-│   ├── machines.js     # Increment & Addition specifications, rule generators
-│   ├── composite.js    # Multiplier composite machine delegating to the adder
-│   ├── ui.js           # Pure DOM view rendering, tape sliding, and lamp pulses
-│   └── main.js         # Event wiring, keyboard controls, presets, playback loop
+│   ├── engine.js       generic deterministic multi-tape Turing machine engine
+│   ├── machines.js     increment and addition specs and rule generators
+│   ├── composite.js    multiplier, which delegates its ADD phase to the adder
+│   ├── ui.js           DOM rendering, tape sliding and lamp pulses
+│   └── main.js         event wiring, keyboard controls, presets and the run loop
 ├── tests/
-│   └── run.js          # Standalone Node test runner (zero external packages)
-├── Documents/          # Original architecture, specifications, and course rubrics
-├── NOTES.md            # Architectural log and design decisions
-├── LICENSE             # MIT License
-└── README.md           # Project overview and documentation
+│   └── run.js          standalone Node test runner
+├── Documents/          scope, UI and engine specs, machine tables and task list
+├── NOTES.md            design decisions
+└── LICENSE
 ```
 
----
+## Background
 
-## Academic Context
-
-Developed for **Theory of Computation (TOC)** — *Topic: "From Tape to ALU: Arithmetic on Turing Machines"*. Designed as a live presentation and demonstration tool to visually prove that foundational computer arithmetic can be rigorously executed on deterministic Turing machines.
+I built this for a Theory of Computation course. The topic was "From Tape to ALU: Arithmetic on Turing Machines", and the goal was a tool for demonstrating that basic computer arithmetic can run on deterministic Turing machines.
 
 ## License
 
-This project is open-source and available under the [MIT License](LICENSE).
+MIT. See [LICENSE](LICENSE).

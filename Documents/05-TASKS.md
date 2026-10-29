@@ -92,7 +92,7 @@ Reminders: scope is in `01-SCOPE.md`; engine details in `03-ENGINE-SPEC.md`; tab
 2. Step 8 times: output `1100`, banner green, step counter 8.
 3. Back 3 times, Step 3 times: same final state.
 4. Run at slow speed: strip slides smoothly, rules table highlight follows, explain bar updates, Pause works mid-run.
-5. To end: jumps straight to `HALTED ✔`.
+5. To end: jumps straight to `HALTED `.
 6. Load `111`: new leading `1` is written, output `1000`.
 7. Invalid input (`12`, empty, 13 bits) shows an inline error and disables `Load`; running machine is unaffected.
 8. Switch to Addition: three strips, columns aligned, all heads in the centre column, state `CARRY 0`.
